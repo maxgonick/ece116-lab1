@@ -110,6 +110,8 @@ void CPU::Controller(instruction *curr)
 #define I std::bitset<7>("0010011")
 #define STORE std::bitset<7>("0100011")
 #define LOAD std::bitset<7>("0000011")
+#define JALR std::bitset<7>("1100111")
+#define BLT std::bitset<7>("1100011")
 	// Determine type of instruction
 	bitset<7> opcode(curr->instr.to_string().substr(25, 7));
 
@@ -193,7 +195,13 @@ void CPU::Controller(instruction *curr)
 
 		CPUflags.setMemRead(1);
 	}
+	else if (opcode == JALR)
+	{
+		cout << "JALR" << endl;
 
+		reg1 = parseTwosComplement(curr->instr.to_string(), 12, 5);
+		reg3 = parseTwosComplement(curr->instr.to_string(), 20, 5);
+	}
 	else
 	{
 		cout << "Terminate" << opcode << endl;
