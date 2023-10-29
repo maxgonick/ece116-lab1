@@ -67,11 +67,6 @@ int main(int argc, char *argv[])
 	bool done = true;
 	while (done == true) // processor's main loop. Each iteration is equal to one clock cycle.
 	{
-		// for (const auto &elem : myCPU.reg_map)
-		// {
-		// 	std::cout << elem.first << " " << elem.second << " "
-		// 			  << "\n";
-		// }
 		// fetch
 		curr = myCPU.Fetch(instMem); // fetching the instruction
 		instr = instruction(curr);
@@ -90,11 +85,6 @@ int main(int argc, char *argv[])
 			// sanity check
 			if (myCPU.readPC() > maxPC) break;
 	}
-	// for (const auto &elem : myCPU.reg_map)
-	// {
-	// 	std::cout << elem.first << " " << elem.second << " "
-	// 			  << "\n";
-	// }
 	int a0 = myCPU.reg_map[10];
 	int a1 = myCPU.reg_map[11];
 	// print the results (you should replace a0 and a1 with your own variables that point to a0 and a1)
