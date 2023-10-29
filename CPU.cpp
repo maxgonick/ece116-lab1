@@ -269,6 +269,7 @@ int CPU::ALU()
 		result = val1 & val2;
 	default:
 		// cout << "wtf happened" << endl;
+		break;
 	}
 	return result;
 }
@@ -334,11 +335,6 @@ int CPU::Memory(int result)
 				PC = PC + intermediate - 4;
 				// cout << PC << " " << intermediate << endl;
 			}
-		}
-
-		else
-		{
-			// cout << "Messed up";
 		}
 	}
 }
