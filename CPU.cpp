@@ -83,6 +83,8 @@ operations flags::getALUOp() const { return ALUOp; }
 bool flags::getMemWrite() const { return memWrite; }
 bool flags::getRegWrite() const { return regWrite; }
 bool flags::getALUSrc() const { return ALUSrc; }
+bool flags::getBranch() const { return branch; }
+bool flags::getSaveRegister() const { return saveRegister; };
 
 // Setter methods
 void flags::setMemRead(bool value) { memRead = value; }
@@ -91,6 +93,8 @@ void flags::setALUOp(operations value) { ALUOp = value; }
 void flags::setMemWrite(bool value) { memWrite = value; }
 void flags::setRegWrite(bool value) { regWrite = value; }
 void flags::setALUSrc(bool value) { ALUSrc = value; }
+void flags::setBranch(bool value) { branch = value; }
+void flags::setSaveRegister(bool value) { saveRegister = value; }
 
 void CPU::resetFlags()
 {
@@ -100,6 +104,8 @@ void CPU::resetFlags()
 	CPUflags.setMemWrite(0);
 	CPUflags.setRegWrite(0);
 	CPUflags.setALUSrc(0);
+	CPUflags.setBranch(0);
+	CPUflags.setSaveRegister(0);
 }
 
 #pragma endregion flag
@@ -201,6 +207,24 @@ void CPU::Controller(instruction *curr)
 
 		reg1 = parseTwosComplement(curr->instr.to_string(), 12, 5);
 		reg3 = parseTwosComplement(curr->instr.to_string(), 20, 5);
+
+		intermediate = parseTwosComplement(curr->instr.to_string(), 0, 12);
+
+		CPUflags.setBranch(1);
+		CPUflags.setALUSrc(1);
+		CPUflags.setSaveRegister(1);
+	}
+	else if (opcode == BLT)
+	{
+		reg1 = parseTwosComplement(curr->instr.to_string(), 12, 5);
+		reg2 = parseTwosComplement(curr->instr.to_string(), 7, 5);
+
+		string intermediateSplice = curr->instr.to_string().substr(0, 1) + curr->instr.to_string().substr(24, 1) + curr->instr.to_string().substr(1, 6) + curr->instr.to_string().substr(20, 4) + curr->instr.to_string().substr(7, 1);
+
+		intermediate = parseTwosComplement(intermediateSplice, 0, 12) << 1;
+		cout << "BLT INTERMEDIAATE IS : " << intermediate << endl;
+
+		CPUflags.setBranch(1);
 	}
 	else
 	{
@@ -251,7 +275,7 @@ int CPU::ALU()
 
 int CPU::Memory(int result)
 {
-	if (!CPUflags.getMemWrite() && !CPUflags.getMemRead())
+	if (!CPUflags.getMemWrite() && !CPUflags.getMemRead() && !CPUflags.getBranch())
 	{
 		// ALU outputs to reg
 
@@ -292,6 +316,23 @@ int CPU::Memory(int result)
 			for (int i = 0; i < 4; i++)
 			{
 				std::cout << "Byte " << (reg_map[reg1] + intermediate + i) << ": " << dmemory[reg_map[reg1] + intermediate + i] << std::endl;
+			}
+		}
+		else if (CPUflags.getBranch() && CPUflags.getSaveRegister())
+		{
+			cout << "JALR BRANCHING" << endl;
+			reg_map[reg3] = PC;
+			PC = reg_map[reg1] + intermediate;
+			cout << PC << " " << intermediate << " saved " << reg_map[reg3] << endl;
+		}
+		else if (CPUflags.getBranch() && !CPUflags.getSaveRegister())
+		{
+			cout << "Checking Equality";
+			if (reg_map[reg1] < reg_map[reg3])
+			{
+				cout << "Branching" << endl;
+				PC = PC + intermediate - 4;
+				cout << PC << " " << intermediate << endl;
 			}
 		}
 

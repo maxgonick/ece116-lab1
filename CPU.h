@@ -31,6 +31,8 @@ class flags
 	bool memWrite;
 	bool regWrite;
 	bool ALUSrc;
+	bool branch;
+	bool saveRegister;
 
 public:
 	flags(); // Constructor
@@ -40,12 +42,16 @@ public:
 	bool getMemWrite() const;
 	bool getRegWrite() const;
 	bool getALUSrc() const;
+	bool getBranch() const;
+	bool getSaveRegister() const;
 	void setMemRead(bool value);
 	void setMemtoReg(bool value);
 	void setALUOp(operations value);
 	void setMemWrite(bool value);
 	void setRegWrite(bool value);
 	void setALUSrc(bool value);
+	void setBranch(bool value);
+	void setSaveRegister(bool value);
 };
 
 class CPU
@@ -79,5 +85,6 @@ public:
 		cout << "memWrite: " << CPUflags.getMemWrite() << endl;
 		cout << "regWrite: " << CPUflags.getRegWrite() << endl;
 		cout << "ALUSrc: " << CPUflags.getALUSrc() << endl;
+		cout << "Branch: " << CPUflags.getBranch() << endl;
 	}
 };
