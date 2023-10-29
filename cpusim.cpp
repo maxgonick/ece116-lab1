@@ -70,13 +70,13 @@ int main(int argc, char *argv[])
 		// fetch
 		curr = myCPU.Fetch(instMem); // fetching the instruction
 		instr = instruction(curr);
-
-		// decode
+		// decode checks if instruction is 0 instruction
 		done = myCPU.Decode(&instr);
 		if (done == false) // break from loop so stats are not mistakenly updated
 			break;
 		// the rest should be implemented here ...
 		// ...
+		myCPU.Controller(&instr);
 
 		// sanity check
 		if (myCPU.readPC() > maxPC)
