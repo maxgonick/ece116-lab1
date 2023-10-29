@@ -124,13 +124,13 @@ void CPU::Controller(instruction *curr)
 	// Switch-esque statement (can't use switch with bitset)
 	if (opcode == R)
 	{
-		cout << "it's an R type " << endl;
+		// cout << "it's an R type " << endl;
 		// Find Registers
 		reg1 = parseTwosComplement(curr->instr.to_string(), 12, 5);
 		reg2 = parseTwosComplement(curr->instr.to_string(), 7, 5);
 		reg3 = parseTwosComplement(curr->instr.to_string(), 20, 5);
 
-		cout << "reg 1: " << reg1 << " reg 2: " << reg2 << " reg 3: " << reg3 << endl;
+		// cout << "reg 1: " << reg1 << " reg 2: " << reg2 << " reg 3: " << reg3 << endl;
 		// set proper flags for R type
 		bitset<7> func7(curr->instr.to_string().substr(0, 7));
 		bitset<3> func3(curr->instr.to_string().substr(17, 3));
@@ -156,7 +156,7 @@ void CPU::Controller(instruction *curr)
 	}
 	else if (opcode == I)
 	{
-		cout << "it's an I type " << endl;
+		// cout << "it's an I type " << endl;
 		// Find Register
 		reg1 = parseTwosComplement(curr->instr.to_string(), 12, 5);
 		reg3 = parseTwosComplement(curr->instr.to_string(), 20, 5);
@@ -171,11 +171,11 @@ void CPU::Controller(instruction *curr)
 			CPUflags.setALUOp(AND);
 		}
 
-		cout << "reg 1: " << reg1 << " intermediate: " << intermediate << endl;
+		// cout << "reg 1: " << reg1 << " intermediate: " << intermediate << endl;
 	}
 	else if (opcode == STORE)
 	{
-		cout << "it's a STORE WORD" << endl;
+		// cout << "it's a STORE WORD" << endl;
 		// Find Register
 
 		// offset
@@ -185,14 +185,14 @@ void CPU::Controller(instruction *curr)
 		// Find Intermediate
 		string intermediateString = curr->instr.to_string().substr(0, 7) + curr->instr.to_string().substr(20, 5);
 		intermediate = parseTwosComplement(intermediateString, 0, 12);
-		cout << "INTERMEDIATE IS " << intermediate << endl;
+		// cout << "INTERMEDIATE IS " << intermediate << endl;
 
 		// Set flags
 		CPUflags.setMemWrite(1);
 	}
 	else if (opcode == LOAD)
 	{
-		cout << "it's a LOAD word" << endl;
+		// cout << "it's a LOAD word" << endl;
 
 		reg1 = parseTwosComplement(curr->instr.to_string(), 12, 5);
 		reg3 = parseTwosComplement(curr->instr.to_string(), 20, 5);
@@ -203,7 +203,7 @@ void CPU::Controller(instruction *curr)
 	}
 	else if (opcode == JALR)
 	{
-		cout << "JALR" << endl;
+		// cout << "JALR" << endl;
 
 		reg1 = parseTwosComplement(curr->instr.to_string(), 12, 5);
 		reg3 = parseTwosComplement(curr->instr.to_string(), 20, 5);
@@ -222,13 +222,13 @@ void CPU::Controller(instruction *curr)
 		string intermediateSplice = curr->instr.to_string().substr(0, 1) + curr->instr.to_string().substr(24, 1) + curr->instr.to_string().substr(1, 6) + curr->instr.to_string().substr(20, 4) + curr->instr.to_string().substr(7, 1);
 
 		intermediate = parseTwosComplement(intermediateSplice, 0, 12) << 1;
-		cout << "BLT INTERMEDIAATE IS : " << intermediate << endl;
+		// cout << "BLT INTERMEDIAATE IS : " << intermediate << endl;
 
 		CPUflags.setBranch(1);
 	}
 	else
 	{
-		cout << "Terminate" << opcode << endl;
+		// cout << "Terminate" << opcode << endl;
 	}
 }
 
@@ -247,7 +247,7 @@ int CPU::ALU()
 	{
 		val2 = reg_map[reg2];
 	}
-	cout << "val1: " << val1 << " val2: " << val2 << " operation: " << CPUflags.getALUOp() << endl;
+	// cout << "val1: " << val1 << " val2: " << val2 << " operation: " << CPUflags.getALUOp() << endl;
 	// Choose Operation
 	operations op = CPUflags.getALUOp();
 
@@ -268,7 +268,7 @@ int CPU::ALU()
 	case AND:
 		result = val1 & val2;
 	default:
-		cout << "wtf happened" << endl;
+		// cout << "wtf happened" << endl;
 	}
 	return result;
 }
@@ -279,7 +279,7 @@ int CPU::Memory(int result)
 	{
 		// ALU outputs to reg
 
-		cout << "Setting Register: " << reg3 << " to " << result << endl;
+		// cout << "Setting Register: " << reg3 << " to " << result << endl;
 
 		reg_map[reg3] = result;
 	}
@@ -288,7 +288,7 @@ int CPU::Memory(int result)
 		// Load
 		if (CPUflags.getMemRead())
 		{
-			cout << "START AT " << reg_map[reg1] + intermediate << endl;
+			// cout << "START AT " << reg_map[reg1] + intermediate << endl;
 			std::bitset<8> bytes[4];
 			for (int i = 0; i < 4; i++)
 			{
@@ -301,13 +301,13 @@ int CPU::Memory(int result)
 				concatenated |= (std::bitset<32>(bytes[i].to_ulong()) << (i * 8));
 			}
 
-			cout << concatenated.to_ulong() << endl;
+			// cout << concatenated.to_ulong() << endl;
 			reg_map[reg3] = concatenated.to_ulong();
 		}
 		// Store
 		else if (CPUflags.getMemWrite())
 		{
-			cout << "START AT " << reg_map[reg1] + intermediate << endl;
+			// cout << "START AT " << reg_map[reg1] + intermediate << endl;
 			for (int i = 0; i < 4; i++)
 			{
 				dmemory[reg_map[reg1] + intermediate + i] = (reg_map[reg2] >> (8 * i) & 0xFF);
@@ -315,30 +315,30 @@ int CPU::Memory(int result)
 
 			for (int i = 0; i < 4; i++)
 			{
-				std::cout << "Byte " << (reg_map[reg1] + intermediate + i) << ": " << dmemory[reg_map[reg1] + intermediate + i] << std::endl;
+				// std::cout << "Byte " << (reg_map[reg1] + intermediate + i) << ": " << dmemory[reg_map[reg1] + intermediate + i] << std::endl;
 			}
 		}
 		else if (CPUflags.getBranch() && CPUflags.getSaveRegister())
 		{
-			cout << "JALR BRANCHING" << endl;
+			// cout << "JALR BRANCHING" << endl;
 			reg_map[reg3] = PC;
 			PC = reg_map[reg1] + intermediate;
-			cout << PC << " " << intermediate << " saved " << reg_map[reg3] << endl;
+			// cout << PC << " " << intermediate << " saved " << reg_map[reg3] << endl;
 		}
 		else if (CPUflags.getBranch() && !CPUflags.getSaveRegister())
 		{
-			cout << "Checking Equality";
+			// cout << "Checking Equality";
 			if (reg_map[reg1] < reg_map[reg3])
 			{
-				cout << "Branching" << endl;
+				// cout << "Branching" << endl;
 				PC = PC + intermediate - 4;
-				cout << PC << " " << intermediate << endl;
+				// cout << PC << " " << intermediate << endl;
 			}
 		}
 
 		else
 		{
-			cout << "Messed up";
+			// cout << "Messed up";
 		}
 	}
 }
