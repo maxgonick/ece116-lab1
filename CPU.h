@@ -51,7 +51,7 @@ public:
 class CPU
 {
 private:
-	int dmemory[4096];
+	std::bitset<8> dmemory[4096];
 	unsigned long PC;
 	flags CPUflags;
 	int reg1;

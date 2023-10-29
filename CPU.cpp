@@ -12,7 +12,7 @@ CPU::CPU()
 	PC = 0;						   // set PC to 0
 	for (int i = 0; i < 4096; i++) // copy instrMEM
 	{
-		dmemory[i] = (0);
+		dmemory[i] = std::bitset<8>("00000000");
 	}
 	// Hardcode 0
 	reg_map[0] = 0;
@@ -108,7 +108,8 @@ void CPU::Controller(instruction *curr)
 {
 #define R std::bitset<7>("0110011")
 #define I std::bitset<7>("0010011")
-
+#define STORE std::bitset<7>("0100011")
+#define LOAD std::bitset<7>("0000011")
 	// Determine type of instruction
 	bitset<7> opcode(curr->instr.to_string().substr(25, 7));
 
@@ -151,9 +152,9 @@ void CPU::Controller(instruction *curr)
 		// Find Register
 		reg1 = parseTwosComplement(curr->instr.to_string(), 12, 5);
 		reg3 = parseTwosComplement(curr->instr.to_string(), 20, 5);
-		intermediate = parseTwosComplement(curr->instr.to_string(), 0, 12);
-		// Find Intermediate
 
+		// Find Intermediate
+		intermediate = parseTwosComplement(curr->instr.to_string(), 0, 12);
 		// Setup Proper flags for I type
 		CPUflags.setALUSrc(1);
 		bitset<3> func3(curr->instr.to_string().substr(17, 3));
@@ -164,6 +165,35 @@ void CPU::Controller(instruction *curr)
 
 		cout << "reg 1: " << reg1 << " intermediate: " << intermediate << endl;
 	}
+	else if (opcode == STORE)
+	{
+		cout << "it's a STORE WORD" << endl;
+		// Find Register
+
+		// offset
+		reg1 = parseTwosComplement(curr->instr.to_string(), 12, 5);
+		// value stored
+		reg2 = parseTwosComplement(curr->instr.to_string(), 7, 5);
+		// Find Intermediate
+		string intermediateString = curr->instr.to_string().substr(0, 7) + curr->instr.to_string().substr(20, 5);
+		intermediate = parseTwosComplement(intermediateString, 0, 12);
+		cout << "INTERMEDIATE IS " << intermediate << endl;
+
+		// Set flags
+		CPUflags.setMemWrite(1);
+	}
+	else if (opcode == LOAD)
+	{
+		cout << "it's a LOAD word" << endl;
+
+		reg1 = parseTwosComplement(curr->instr.to_string(), 12, 5);
+		reg3 = parseTwosComplement(curr->instr.to_string(), 20, 5);
+
+		intermediate = parseTwosComplement(curr->instr.to_string(), 0, 12);
+
+		CPUflags.setMemRead(1);
+	}
+
 	else
 	{
 		cout << "Terminate" << opcode << endl;
@@ -213,20 +243,53 @@ int CPU::ALU()
 
 int CPU::Memory(int result)
 {
-	// TODO Memory Module
-	if (!CPUflags.getMemWrite())
+	if (!CPUflags.getMemWrite() && !CPUflags.getMemRead())
 	{
-
-		if (CPUflags.getMemtoReg())
-		{
-			;
-		}
 		// ALU outputs to reg
+
+		cout << "Setting Register: " << reg3 << " to " << result << endl;
+
+		reg_map[reg3] = result;
+	}
+	else
+	{
+		// Load
+		if (CPUflags.getMemRead())
+		{
+			cout << "START AT " << reg_map[reg1] + intermediate << endl;
+			std::bitset<8> bytes[4];
+			for (int i = 0; i < 4; i++)
+			{
+				bytes[i] = dmemory[reg_map[reg1] + intermediate + i];
+			}
+
+			std::bitset<32> concatenated(0);
+			for (int i = 0; i < 4; i++)
+			{
+				concatenated |= (std::bitset<32>(bytes[i].to_ulong()) << (i * 8));
+			}
+
+			cout << concatenated.to_ulong() << endl;
+			reg_map[reg3] = concatenated.to_ulong();
+		}
+		// Store
+		else if (CPUflags.getMemWrite())
+		{
+			cout << "START AT " << reg_map[reg1] + intermediate << endl;
+			for (int i = 0; i < 4; i++)
+			{
+				dmemory[reg_map[reg1] + intermediate + i] = (reg_map[reg2] >> (8 * i) & 0xFF);
+			}
+
+			for (int i = 0; i < 4; i++)
+			{
+				std::cout << "Byte " << (reg_map[reg1] + intermediate + i) << ": " << dmemory[reg_map[reg1] + intermediate + i] << std::endl;
+			}
+		}
+
 		else
 		{
-			cout << "Setting Register: " << reg3 << " to " << result << endl;
-
-			reg_map[reg3] = result;
+			cout << "Messed up";
 		}
 	}
 }
