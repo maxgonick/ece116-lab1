@@ -18,7 +18,8 @@ enum operations
 	ADD,
 	SUB,
 	XOR,
-	SRA
+	SRA,
+	AND
 };
 
 class flags
@@ -66,6 +67,8 @@ public:
 	void Controller(instruction *instr);
 	int ALU();
 	std::map<int, int> reg_map;
+	int Memory(int result);
+	void resetFlags();
 
 	// Function to print the values of all flags
 	void printFlags()

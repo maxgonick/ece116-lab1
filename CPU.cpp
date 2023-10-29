@@ -14,6 +14,8 @@ CPU::CPU()
 	{
 		dmemory[i] = (0);
 	}
+	// Hardcode 0
+	reg_map[0] = 0;
 }
 
 bitset<32> CPU::Fetch(bitset<8> *instmem)
@@ -37,6 +39,29 @@ unsigned long CPU::readPC()
 }
 
 // Add other functions here ...
+
+int parseTwosComplement(const std::string &binaryString, int startBit, int numBits)
+{
+	if (binaryString[startBit] == '1')
+	{
+		// It's a negative number
+		int value = 0;
+		for (int i = 0; i < numBits; i++)
+		{
+			if (binaryString[startBit + i] == '0')
+			{
+				value |= (1 << (numBits - 1 - i));
+			}
+		}
+		// Convert to negative by taking the two's complement
+		return -(value + 1);
+	}
+	else
+	{
+		// It's a positive number
+		return std::stoi(binaryString.substr(startBit, numBits), nullptr, 2);
+	}
+}
 
 // Flag Functions
 #pragma region flag
@@ -67,6 +92,16 @@ void flags::setMemWrite(bool value) { memWrite = value; }
 void flags::setRegWrite(bool value) { regWrite = value; }
 void flags::setALUSrc(bool value) { ALUSrc = value; }
 
+void CPU::resetFlags()
+{
+	CPUflags.setMemRead(0);
+	CPUflags.setMemtoReg(0);
+	CPUflags.setALUOp(ADD);
+	CPUflags.setMemWrite(0);
+	CPUflags.setRegWrite(0);
+	CPUflags.setALUSrc(0);
+}
+
 #pragma endregion flag
 // Setup Flags from Instruction
 void CPU::Controller(instruction *curr)
@@ -80,19 +115,54 @@ void CPU::Controller(instruction *curr)
 	// Switch-esque statement (can't use switch with bitset)
 	if (opcode == R)
 	{
-		cout << "it's an R type " << opcode << endl;
+		cout << "it's an R type " << endl;
 		// Find Registers
-		reg1 = std::stoi(curr->instr.to_string().substr(12, 5), nullptr, 2);
+		reg1 = parseTwosComplement(curr->instr.to_string(), 12, 5);
+		reg2 = parseTwosComplement(curr->instr.to_string(), 7, 5);
+		reg3 = parseTwosComplement(curr->instr.to_string(), 20, 5);
+
+		cout << "reg 1: " << reg1 << " reg 2: " << reg2 << " reg 3: " << reg3 << endl;
 		// set proper flags for R type
-		//  CPUflags.
+		bitset<7> func7(curr->instr.to_string().substr(0, 7));
+		bitset<3> func3(curr->instr.to_string().substr(17, 3));
+
+		if (func7 == std::bitset<7>("0000000"))
+		{
+			if (func3 == std::bitset<3>("100"))
+			{
+				CPUflags.setALUOp(XOR);
+			}
+		}
+		else if (func7 == std::bitset<7>("0100000"))
+		{
+			if (func3 == std::bitset<3>("000"))
+			{
+				CPUflags.setALUOp(SUB);
+			}
+			else
+			{
+				CPUflags.setALUOp(SRA);
+			}
+		}
 	}
 	else if (opcode == I)
 	{
-		cout << "it's an I type " << opcode << endl;
+		cout << "it's an I type " << endl;
 		// Find Register
-		reg1 = std::stoi(curr->instr.to_string().substr(12, 5), nullptr, 2);
+		reg1 = parseTwosComplement(curr->instr.to_string(), 12, 5);
+		reg3 = parseTwosComplement(curr->instr.to_string(), 20, 5);
+		intermediate = parseTwosComplement(curr->instr.to_string(), 0, 12);
 		// Find Intermediate
-		intermediate = std::stoi(curr->instr.to_string().substr(0, 12), nullptr, 2);
+
+		// Setup Proper flags for I type
+		CPUflags.setALUSrc(1);
+		bitset<3> func3(curr->instr.to_string().substr(17, 3));
+		if (func3 == std::bitset<3>("111"))
+		{
+			CPUflags.setALUOp(AND);
+		}
+
+		cout << "reg 1: " << reg1 << " intermediate: " << intermediate << endl;
 	}
 	else
 	{
@@ -104,6 +174,7 @@ int CPU::ALU()
 {
 	int val1 = reg_map[reg1];
 	int val2;
+	int result;
 	// Multiplexer Intermediate
 	if (CPUflags.getALUSrc() == 1)
 	{
@@ -114,6 +185,48 @@ int CPU::ALU()
 	{
 		val2 = reg_map[reg2];
 	}
-
+	cout << "val1: " << val1 << " val2: " << val2 << " operation: " << CPUflags.getALUOp() << endl;
 	// Choose Operation
+	operations op = CPUflags.getALUOp();
+
+	switch (op)
+	{
+	case ADD:
+		result = val1 + val2;
+		break;
+	case SUB:
+		result = val1 - val2;
+		break;
+	case XOR:
+		result = val1 ^ val2;
+		break;
+	case SRA:
+		result = val1 >> val2;
+		break;
+	case AND:
+		result = val1 & val2;
+	default:
+		cout << "wtf happened" << endl;
+	}
+	return result;
+}
+
+int CPU::Memory(int result)
+{
+	// TODO Memory Module
+	if (!CPUflags.getMemWrite())
+	{
+
+		if (CPUflags.getMemtoReg())
+		{
+			;
+		}
+		// ALU outputs to reg
+		else
+		{
+			cout << "Setting Register: " << reg3 << " to " << result << endl;
+
+			reg_map[reg3] = result;
+		}
+	}
 }
